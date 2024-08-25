@@ -1,21 +1,33 @@
+<?php
+require('config.php');
 
-                  <?php
-                        require('config.php');
-                        if (isset($_POST['feed'])) 
-                        {
-                            $F_name = $_POST['name'];
-                            $F_mail = $_POST['email'];
-                            $F_sub = $_POST['subject'];
-                            $F_msg = $_POST['message'];
-                            $query = "INSERT INTO feedback(fname,fmail,fsub,fmsg)VALUES('$F_name','$F_mail','$F_sub','$F_msg')";
-                             $res = mysqli_query($con,$query);
-                            if ($res) { 
-                            echo"<script>alert('Your Feedback Sent Succesfully')</script>";
-                                
-                            }else
-                            {echo "<script>alert('Something Went Wrong Please Try Again')</script>";}
-                        }
-                        ?>
+$message = '';
+$message_type = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['feed'])) {
+        $F_name = trim($_POST['name']);
+        $F_mail = trim($_POST['email']);
+        $F_sub = trim($_POST['subject']);
+        $F_msg = trim($_POST['message']);
+
+        if (!empty($F_name) && !empty($F_mail) && !empty($F_sub) && !empty($F_msg)) {
+            $stmt = $con->prepare("INSERT INTO feedback (fname, fmail, fsub, fmsg) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $F_name, $F_mail, $F_sub, $F_msg);
+
+            if ($stmt->execute()) {
+                $message = "Your feedback has been sent successfully!";
+                $message_type = "success";
+            } else {
+                $message = "Something went wrong. Please try again.";
+                $message_type = "error";
+            }
+            $stmt->close();
+        }
+    }
+}
+?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -30,6 +42,10 @@
   <link rel="stylesheet" type="text/css" href="css/font-awesome.min.css">
   <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="css/style.css">
+
+  <!-- toastr -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">        
+
   <!-- =======================================================
     Theme Name: Medilab
     Theme URL: https://bootstrapmade.com/medilab-free-medical-bootstrap-theme/
@@ -502,11 +518,24 @@
   </footer>
   <!--/ footer-->
 
-  <script src="js/jquery.min.js"></script>
-  <script src="js/jquery.easing.min.js"></script>
-  <script src="js/bootstrap.min.js"></script>
-  <script src="js/custom.js"></script>
-  <
+    <script src="js/jquery.min.js"></script>
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/custom.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        <?php if ($message): ?>
+            toastr.<?php echo $message_type; ?>("<?php echo $message; ?>");
+            setTimeout(function() {
+                if ("<?php echo $message_type; ?>" === "success") {
+                    window.location.href = 'index.php';
+                }
+            }, 1000); 
+        <?php endif; ?>
+    </script>
+
+
 </body>
 
 </html>
